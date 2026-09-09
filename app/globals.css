@@ -1,0 +1,68 @@
+:root {
+  --bg: #12081f;
+  --bg-soft: #1c0f30;
+  --surface: #241640;
+  --surface-hover: #2d1c4d;
+  --border: #3a2960;
+  --text: #f4effc;
+  --text-muted: #b9a9d9;
+  --accent: #ff6fae;
+  --accent-strong: #ff4f9a;
+  --accent-contrast: #1a0a2b;
+  --focus-ring: #ffd166;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --max-width: 480px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% -10%, var(--bg-soft), var(--bg) 60%);
+  color: var(--text);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
