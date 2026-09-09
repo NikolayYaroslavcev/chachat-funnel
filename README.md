@@ -120,11 +120,10 @@ outcome. Full details, including the backend-only/deterministic guarantees:
   checked server-side on every visit (not only immediately after paying);
   links to real public ChaChat entry points.
 - **Repeat visit** — a returning visitor whose identity already has a
-  succeeded purchase is redirected straight to Install once the funnel
-  reaches the Email or Paywall screen (and Install re-checks access itself on
-  every load). Start and the Quiz screens do not currently perform this
-  check, so a repeat visitor who lands on Start still sees Start/Quiz first —
-  see "Known limitations" below.
+  succeeded purchase is redirected straight to Install regardless of which
+  funnel screen the repeat visit lands on (Start, any Quiz step, or Email/
+  Paywall — see spec.md §7), and Install re-checks access itself on every
+  load.
 
 ## Important implementation decisions
 
@@ -185,10 +184,12 @@ Example queries against this data: [docs/analytics-queries.sql](docs/analytics-q
 
 ## Analytics SQL
 
-Run the whole file against the running Postgres container:
+Run the whole file against the running Postgres container (the `db`
+container only sees its own filesystem, so the file has to be piped in over
+stdin rather than referenced with `-f`):
 
 ```bash
-docker compose exec db psql -U chachat -d chachat_funnel -f docs/analytics-queries.sql
+docker compose exec -T db psql -U chachat -d chachat_funnel < docs/analytics-queries.sql
 ```
 
 (Or paste individual queries into `psql` / any Postgres client using the same
@@ -251,12 +252,12 @@ Explicitly out of scope per [docs/spec.md](docs/spec.md) §1, §19:
   no promo codes, no multi-currency.
 - **No automatic funnel resumption** from an arbitrary step on repeat visit,
   other than the one fixed case: redirect straight to Install if the
-  identity already has a succeeded purchase. That redirect is currently
-  implemented at the Email and Paywall screens (and enforced by Install's own
-  guard), not at Start/Quiz — a repeat visitor who lands on Start still walks
-  through Start/Quiz before hitting the check, rather than being redirected
-  "regardless of which screen the repeat visit starts from" as spec.md §7
-  describes.
+  identity already has a succeeded purchase. That redirect is enforced at
+  every funnel entry point a repeat visitor could land on (Start, each Quiz
+  screen, Email, Paywall, and Install's own guard), per spec.md §7 — but
+  there is no broader "resume where you left off" behavior beyond that one
+  case (e.g. an identified-but-unpurchased visitor who lands on Start is not
+  auto-forwarded to Paywall; spec.md §7 explicitly leaves that unspecified).
 - **Not full test coverage** — testing effort is concentrated on payment
   state machine / concurrency and identity/session logic, per spec §19; most
   UI components and simpler API routes are exercised manually/end-to-end

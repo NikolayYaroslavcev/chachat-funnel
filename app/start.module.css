@@ -15,8 +15,9 @@
 }
 
 .wordmark {
+  font-family: var(--font-display, var(--font-body));
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--accent);
@@ -33,7 +34,7 @@
 .headline {
   font-size: clamp(30px, 8vw, 40px);
   line-height: 1.15;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0 0 var(--space-4);
   letter-spacing: -0.01em;
 }
@@ -56,19 +57,12 @@
 }
 
 .valueItem {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
 }
 
-.valueIcon {
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
+.valueItem:last-child {
+  border-bottom: 1px solid var(--border);
 }
 
 .valueText {
@@ -79,13 +73,12 @@
 
 .valueLabel {
   display: block;
-  font-weight: 600;
+  font-family: var(--font-display, var(--font-body));
+  font-weight: 700;
   margin-bottom: 2px;
 }
 
 .footer {
-  position: sticky;
-  bottom: 0;
   padding-top: var(--space-4);
 }
 
@@ -94,14 +87,19 @@
   width: 100%;
   text-align: center;
   padding: var(--space-4) var(--space-5);
+  font-family: var(--font-display, var(--font-body));
   font-size: 17px;
   font-weight: 700;
   color: var(--accent-contrast);
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  background: var(--accent);
   border: none;
   border-radius: var(--radius-lg);
   text-decoration: none;
-  box-shadow: 0 8px 24px -8px rgba(255, 79, 154, 0.55);
+  transition: transform 0.16s var(--ease-out);
+}
+
+.cta:active {
+  transform: scale(0.98);
 }
 
 .ctaNote {

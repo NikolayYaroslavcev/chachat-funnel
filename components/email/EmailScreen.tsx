@@ -47,7 +47,7 @@ export function EmailScreen() {
         setError(
           data?.message === "invalid email"
             ? "That doesn't look like a valid email address."
-            : "Something went wrong — please try again.",
+            : "Something went wrong, please try again.",
         );
         setSubmitting(false);
         return;
@@ -57,7 +57,7 @@ export function EmailScreen() {
       // disabled during the transition instead of briefly re-enabling.
       router.push("/paywall");
     } catch {
-      setError("Couldn't reach the server — check your connection and try again.");
+      setError("Couldn't reach the server, check your connection and try again.");
       setSubmitting(false);
     }
   }
@@ -68,7 +68,7 @@ export function EmailScreen() {
         <div className={styles.hero}>
           <h1 className={styles.headline}>What&apos;s your email?</h1>
           <p className={styles.subhead}>
-            We use this to save your quiz answers and set up your ChaChat account — no spam, and this assignment
+            We use this to save your quiz answers and set up your ChaChat account. No spam, and this assignment
             doesn&apos;t send real emails.
           </p>
         </div>

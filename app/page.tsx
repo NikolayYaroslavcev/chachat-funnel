@@ -1,6 +1,10 @@
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { SessionBootstrap } from "@/components/SessionBootstrap";
 import { ScreenView } from "@/components/ScreenView";
+import { VISITOR_COOKIE_NAME } from "@/lib/cookies";
+import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 import styles from "./start.module.css";
 
 // Start screen (spec.md 4.1): explains the product, gives a reason to
@@ -8,7 +12,16 @@ import styles from "./start.module.css";
 // capabilities (product-research.md 1) — memory, voice, custom characters —
 // kept to a neutral, "safe for review" tone despite the product's 18+
 // romance/roleplay positioning (spec.md 2, 15).
-export default function StartPage() {
+export default async function StartPage() {
+  const cookieStore = await cookies();
+  const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
+
+  // Repeat visit (spec.md 7, 18): send an already-purchased identity
+  // straight to Install even when the repeat visit starts at Start.
+  if (await hasSucceededPurchaseForVisitor(visitorId)) {
+    redirect("/install");
+  }
+
   return (
     <main className={styles.screen}>
       <SessionBootstrap />
@@ -20,32 +33,23 @@ export default function StartPage() {
           <h1 className={styles.headline}>Meet an AI character who actually remembers you</h1>
           <p className={styles.subhead}>
             ChaChat is an AI companion app. Chat by text or voice, build an ongoing story, and come back to a
-            character who recalls what you told them last time — instead of starting over every conversation.
+            character who recalls what you told them last time, instead of starting over every conversation.
           </p>
 
           <ul className={styles.values}>
             <li className={styles.valueItem}>
-              <span className={styles.valueIcon} aria-hidden="true">
-                🧠
-              </span>
               <span className={styles.valueText}>
                 <span className={styles.valueLabel}>Remembers you</span>
                 Your character keeps track of what you&apos;ve shared, so conversations build on each other.
               </span>
             </li>
             <li className={styles.valueItem}>
-              <span className={styles.valueIcon} aria-hidden="true">
-                🎙️
-              </span>
               <span className={styles.valueText}>
                 <span className={styles.valueLabel}>Text or voice</span>
-                Type it out, or talk it out with a voice call — whatever feels natural.
+                Type it out, or talk it out with a voice call. Whatever feels natural.
               </span>
             </li>
             <li className={styles.valueItem}>
-              <span className={styles.valueIcon} aria-hidden="true">
-                ✨
-              </span>
               <span className={styles.valueText}>
                 <span className={styles.valueLabel}>Make it yours</span>
                 Pick a ready-made character, or create your own with a personality and backstory you choose.
@@ -62,7 +66,7 @@ export default function StartPage() {
           <Link href="/quiz" className={styles.cta}>
             Get started
           </Link>
-          <p className={styles.ctaNote}>Takes about a minute — a few quick questions to get you set up.</p>
+          <p className={styles.ctaNote}>Takes about a minute, a few quick questions to get you set up.</p>
         </div>
       </div>
     </main>

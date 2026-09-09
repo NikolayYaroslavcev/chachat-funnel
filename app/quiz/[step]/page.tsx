@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { VISITOR_COOKIE_NAME } from "@/lib/cookies";
 import { findActiveSession } from "@/lib/visitor-session";
 import { getQuestionByStep, TOTAL_QUIZ_STEPS } from "@/lib/quiz";
+import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 import { QuizStepScreen } from "@/components/quiz/QuizStepScreen";
 
 // Server Component: validates the step, and — read-only, no session/visitor
@@ -22,6 +23,12 @@ export default async function QuizStepPage({ params }: { params: Promise<{ step:
 
   const cookieStore = await cookies();
   const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
+
+  // Repeat visit (spec.md 7, 18): send an already-purchased identity
+  // straight to Install even when the repeat visit starts mid-quiz.
+  if (await hasSucceededPurchaseForVisitor(visitorId)) {
+    redirect("/install");
+  }
 
   let selectedValue: string | null = null;
   if (visitorId) {

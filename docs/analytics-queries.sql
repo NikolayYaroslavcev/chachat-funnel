@@ -3,7 +3,7 @@
 -- Runs against the schema in prisma/schema.prisma (see prisma/migrations for
 -- the raw-SQL invariants). Every query below was executed against a running
 -- instance of this schema; see README.md "Analytics SQL" for how to run them
--- yourself (`docker compose exec db psql -U chachat -d chachat_funnel -f
+-- yourself (`docker compose exec -T db psql -U chachat -d chachat_funnel <
 -- docs/analytics-queries.sql`, or paste individual queries into psql/a GUI
 -- client).
 --

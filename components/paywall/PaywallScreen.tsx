@@ -50,7 +50,7 @@ type Props = { plans: PlanSummary[] };
 const PLAN_POSITIONING: Record<string, { badge?: string; tagline: string }> = {
   weekly: { tagline: "Try it out, no long-term commitment." },
   monthly: { badge: "Most popular", tagline: "The regular way most people stay connected with their companion." },
-  "3-months": { badge: "Best value", tagline: "Lowest price per week — for the long run." },
+  "3-months": { badge: "Best value", tagline: "Lowest price per week, for the long run." },
 };
 
 type FieldErrors = { cardNumber?: string; expiry?: string; cvc?: string };
@@ -170,7 +170,7 @@ export function PaywallScreen({ plans }: Props) {
       } else if (data?.status === "timed_out") {
         setFormError("The payment timed out. Please try again.");
       } else {
-        setFormError("Something went wrong — please try again.");
+        setFormError("Something went wrong, please try again.");
       }
       clearIdempotencyKey();
       setStatus("error");
@@ -178,7 +178,7 @@ export function PaywallScreen({ plans }: Props) {
       // The request may still have reached the server (spec.md 13's
       // "Network failure" scenario) — keep the key so a retry resolves to
       // whatever actually happened instead of starting a new operation.
-      setFormError("Couldn't reach the server — check your connection and try again.");
+      setFormError("Couldn't reach the server, check your connection and try again.");
       setStatus("error");
     }
   }
@@ -239,7 +239,7 @@ export function PaywallScreen({ plans }: Props) {
         </div>
 
         <p className={styles.autoRenewNote}>
-          Plans renew automatically at the price shown until you cancel — this is a subscription, not a one-time
+          Plans renew automatically at the price shown until you cancel. This is a subscription, not a one-time
           payment.
         </p>
 
@@ -334,11 +334,11 @@ export function PaywallScreen({ plans }: Props) {
           )}
 
           <button type="submit" className={styles.cta} disabled={submitting || !selectedPlanId}>
-            {submitting ? "Processing…" : `Purchase${selectedPlan ? ` — ${formatPrice(selectedPlan)}` : ""}`}
+            {submitting ? "Processing…" : `Purchase${selectedPlan ? ` for ${formatPrice(selectedPlan)}` : ""}`}
           </button>
 
           <p className={styles.trustNote}>
-            This is a test environment — no real charge will occur. It&apos;s safe to click Purchase once and wait;
+            This is a test environment, no real charge will occur. It&apos;s safe to click Purchase once and wait;
             we&apos;ll never charge you twice for the same request.
           </p>
         </form>

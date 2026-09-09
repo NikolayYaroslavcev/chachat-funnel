@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { VISITOR_COOKIE_NAME } from "@/lib/cookies";
 import { findActiveSession } from "@/lib/visitor-session";
 import { QUIZ_QUESTIONS } from "@/lib/quiz";
+import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 
 // Bare /quiz resumes at the right step (spec.md 4, "refresh preserves
 // progress"): the first unanswered question for the current session, or the
@@ -12,6 +13,12 @@ import { QUIZ_QUESTIONS } from "@/lib/quiz";
 export default async function QuizIndexPage() {
   const cookieStore = await cookies();
   const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
+
+  // Repeat visit (spec.md 7, 18): send an already-purchased identity
+  // straight to Install even when the repeat visit starts at Quiz.
+  if (await hasSucceededPurchaseForVisitor(visitorId)) {
+    redirect("/install");
+  }
 
   if (visitorId) {
     const visitor = await prisma.visitor.findUnique({ where: { id: visitorId } });

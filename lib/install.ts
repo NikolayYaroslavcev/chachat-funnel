@@ -36,6 +36,17 @@ export async function getSucceededPurchase(userId: string): Promise<PurchaseSumm
   };
 }
 
+// Repeat-visit guard (spec.md 7, 18): every funnel screen a repeat visitor
+// could land on first — not only Email/Paywall — must send them straight to
+// Install once their identity already has a succeeded purchase, "regardless
+// of which screen the repeat visit starts from".
+export async function hasSucceededPurchaseForVisitor(visitorId: string | undefined): Promise<boolean> {
+  if (!visitorId) return false;
+  const visitor = await prisma.visitor.findUnique({ where: { id: visitorId } });
+  if (!visitor || !visitor.userId) return false;
+  return (await getSucceededPurchase(visitor.userId)) !== null;
+}
+
 // Install access guard (spec.md 16): checked on every request, derived
 // purely from server-side state keyed off the visitor cookie value. Accepts
 // no client-supplied user/purchase id or success flag — there is nothing to

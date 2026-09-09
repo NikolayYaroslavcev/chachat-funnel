@@ -40,7 +40,7 @@ export function extractAttribution(request: NextRequest): Attribution {
 // the browser captured at the real landing navigation (`window.location.href`,
 // `document.referrer`), and this builds an Attribution from those instead of
 // from the wrapping request.
-export function attributionFromLandingUrl(
+function attributionFromLandingUrl(
   landingUrl: string,
   referrer: string | null,
   userAgent: string | null,

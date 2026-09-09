@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { ScreenView } from "@/components/ScreenView";
 import type { QuizQuestion } from "@/lib/quiz";
 import styles from "./quiz.module.css";
@@ -45,7 +46,7 @@ export function QuizStepScreen({ step, totalSteps, question, initialSelectedValu
       });
     } catch {
       setPendingValue(null);
-      setError("Couldn't save your answer — please try again.");
+      setError("Couldn't save your answer, please try again.");
     }
   }
 
@@ -56,7 +57,10 @@ export function QuizStepScreen({ step, totalSteps, question, initialSelectedValu
       <ScreenView key={step} screen="quiz" step={String(step)} />
       <div className={styles.inner}>
         <div className={styles.progressTrack}>
-          <div className={styles.progressBar} style={{ width: `${(step / totalSteps) * 100}%` }} />
+          <div
+            className={styles.progressBar}
+            style={{ "--progress": step / totalSteps } as React.CSSProperties}
+          />
         </div>
         <p className={styles.stepLabel}>
           Question {step} of {totalSteps}
@@ -84,7 +88,8 @@ export function QuizStepScreen({ step, totalSteps, question, initialSelectedValu
         {step > 1 && (
           <div className={styles.backRow}>
             <button type="button" className={styles.backLink} onClick={() => router.back()} disabled={busy}>
-              ← Back
+              <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
+              Back
             </button>
           </div>
         )}

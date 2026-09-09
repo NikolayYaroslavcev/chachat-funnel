@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { resolveVisitorSession } from "@/lib/visitor-session";
 import { processPurchase } from "@/lib/payment";
 import { FAKE_PSP_TEST_CARDS } from "@/lib/fake-psp";
-import { getSucceededPurchase, resolveInstallAccess } from "@/lib/install";
+import { getSucceededPurchase, hasSucceededPurchaseForVisitor, resolveInstallAccess } from "@/lib/install";
 import { POST as screenViewRoute } from "@/app/api/screen-view/route";
 import { VISITOR_COOKIE_NAME } from "@/lib/cookies";
 
@@ -134,6 +134,40 @@ describe("getSucceededPurchase", () => {
   it("returns null for a user with no purchase", async () => {
     const { user } = await identifiedVisitor();
     expect(await getSucceededPurchase(user.id)).toBeNull();
+  });
+});
+
+describe("hasSucceededPurchaseForVisitor", () => {
+  // spec.md 7, 18: the repeat-visit → Install redirect must apply
+  // "regardless of which screen the repeat visit starts from" — this is the
+  // guard Start and every Quiz screen call, in addition to Email/Paywall.
+  it("returns false when there is no visitor id at all", async () => {
+    expect(await hasSucceededPurchaseForVisitor(undefined)).toBe(false);
+  });
+
+  it("returns false for an unknown/tampered visitor id", async () => {
+    expect(await hasSucceededPurchaseForVisitor("not-a-real-visitor-id")).toBe(false);
+  });
+
+  it("returns false for a visitor that has never identified with an email", async () => {
+    const { visitor } = await resolveVisitorSession(
+      new NextRequest("http://localhost:3000/api/session", { method: "POST" }),
+    );
+    expect(await hasSucceededPurchaseForVisitor(visitor.id)).toBe(false);
+  });
+
+  it("returns false for an identified user with no succeeded purchase", async () => {
+    const { visitor } = await identifiedVisitor();
+    expect(await hasSucceededPurchaseForVisitor(visitor.id)).toBe(false);
+  });
+
+  it("returns true for an identified user with a succeeded purchase", async () => {
+    const plan = await makeMonthlyPlan();
+    const { visitor, session, user } = await identifiedVisitor();
+    const result = await processPurchase({ session, userId: user.id, plan, card: card(FAKE_PSP_TEST_CARDS.success) });
+    expect(result.outcome).toBe("succeeded");
+
+    expect(await hasSucceededPurchaseForVisitor(visitor.id)).toBe(true);
   });
 });
 
