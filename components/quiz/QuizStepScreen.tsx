@@ -14,12 +14,6 @@ type Props = {
   initialSelectedValue: string | null;
 };
 
-// Renders one quiz step (spec.md 4.2, 15): a single question, single-choice
-// answers. Selecting an option saves it immediately (not only at the end of
-// the quiz) and auto-advances, matching a quiz UX rather than a form with a
-// separate submit step. `initialSelectedValue` comes from the server (the
-// page's SSR read of any existing answer for this session/question), so
-// back/refresh shows the prior choice instead of a blank state.
 export function QuizStepScreen({ step, totalSteps, question, initialSelectedValue }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState(initialSelectedValue);

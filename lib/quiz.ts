@@ -2,13 +2,6 @@ import type { QuizAnswer, Session, Visitor } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/analytics";
 
-// The funnel's 5 quiz questions, fixed by spec.md 15 (count, order, prompts
-// and options are specified there verbatim — not a product decision left to
-// implementation). `key` is question_key (spec.md 9, 10); option `value` is
-// answer_value. Questions 2 and 4 are the "product-aware" pair spec.md 15
-// requires (memory, voice) — both confirmed ChaChat features per
-// product-research.md 1. Everything else is segmentation, not invented
-// product functionality.
 export type QuizQuestion = {
   step: number;
   key: string;
@@ -90,13 +83,6 @@ export type SubmitQuizAnswerResult = {
   completed: boolean;
 };
 
-// Persists one quiz answer (spec.md 4.2, 9): upserts on the (session,
-// question) unique constraint so re-answering (back/refresh, changing a
-// choice) updates the existing row instead of duplicating it, records
-// quiz_answer_submitted (spec.md 10), and — once every question in the
-// session has an answer — records quiz_completed exactly once. Wrapped in a
-// single transaction so the answer, its event, and (when applicable) the
-// completion event are committed atomically.
 export async function submitQuizAnswer(
   session: Session,
   visitor: Visitor,

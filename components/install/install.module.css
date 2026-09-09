@@ -42,6 +42,7 @@
   line-height: 1.5;
   color: var(--text-muted);
   margin: 0 0 var(--space-6);
+  max-width: 42ch;
 }
 
 .actions {
@@ -85,7 +86,7 @@
   text-decoration: none;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   transition: transform 0.16s var(--ease-out);
 }

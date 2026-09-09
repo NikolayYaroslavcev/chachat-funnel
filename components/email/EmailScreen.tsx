@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import { isValidEmail } from "@/lib/email";
 import styles from "./email.module.css";
 
-// Email screen (spec.md 4.3): the one form standing between Quiz and
-// Paywall. Submits to the existing /api/identify endpoint, which owns all
-// identity logic (new vs. existing user, visitor linking, email
-// normalization, concurrency, and recording `email_submitted` — see
-// lib/identify.ts) — this component only renders the form and reacts to
-// the endpoint's result. It fires no analytics itself beyond the
-// screen_view already recorded by the parent page's <ScreenView>.
 export function EmailScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -53,8 +46,6 @@ export function EmailScreen() {
         return;
       }
 
-      // Navigate on success; leave `submitting` true so the form stays
-      // disabled during the transition instead of briefly re-enabling.
       router.push("/paywall");
     } catch {
       setError("Couldn't reach the server, check your connection and try again.");

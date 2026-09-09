@@ -5,13 +5,6 @@ import { processPurchase, type PurchaseOutcome } from "@/lib/payment";
 import { FAKE_PSP_TEST_CARDS } from "@/lib/fake-psp";
 import { NextRequest } from "next/server";
 
-// Stage 12: real-PostgreSQL concurrency/idempotency tests. These exercise
-// actual overlapping asynchronous execution (Promise.all over multiple
-// processPurchase calls hitting the same real DB) rather than sequential
-// calls or mocked Prisma — the guarantee under test
-// (payment_attempts_one_active_per_user, spec.md 13) only means anything
-// under real concurrent commits.
-
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(
     'TRUNCATE TABLE "funnel_events", "quiz_answers", "purchases", "payment_attempts", "plans", "sessions", "visitors", "users" RESTART IDENTITY CASCADE',
@@ -116,8 +109,6 @@ describe("payment concurrency — double-click / two tabs (same plan)", () => {
     expect(succeeded).toHaveLength(1);
 
     const attemptIds = new Set(results.map((r) => r.attempt?.id).filter(Boolean));
-    // All three calls resolved onto the same underlying attempt id — the
-    // one, singular logical payment operation.
     expect(attemptIds.size).toBe(1);
 
     await assertDbInvariants(user.id);
@@ -132,10 +123,6 @@ describe("payment concurrency — retry after completion", () => {
     const first = await processPurchase({ session, userId: user.id, plan, card: card(FAKE_PSP_TEST_CARDS.success) });
     expect(first.outcome).toBe("succeeded");
 
-    // No idempotencyKey: the active-attempt window is closed (the first
-    // attempt is terminal), so this genuinely is a new, unrelated request as
-    // far as the server can tell — spec.md 13 explicitly permits this
-    // ("Retry после succeeded... не запрещается как техническая операция").
     const second = await processPurchase({ session, userId: user.id, plan, card: card(FAKE_PSP_TEST_CARDS.success) });
     expect(second.outcome).toBe("succeeded");
     expect(await prisma.paymentAttempt.count({ where: { userId: user.id } })).toBe(2);
@@ -155,9 +142,6 @@ describe("payment concurrency — retry after completion", () => {
     });
     expect(first.outcome).toBe("succeeded");
 
-    // Simulates a client retry after a network failure (spec.md 13) or a
-    // resumed submit after refresh: same idempotency key, request arrives
-    // well after the original has already gone terminal.
     const replay = await processPurchase({
       session,
       userId: user.id,
@@ -197,9 +181,6 @@ describe("payment concurrency — during processing", () => {
     const plan = await makeMonthlyPlan();
     const { session, user } = await identifiedVisitor();
 
-    // Use the timeout card so the winning attempt spends real wall-clock
-    // time in `processing`, giving the second call a wide window to land
-    // squarely inside that state (not just at insert time).
     const [winner, duplicate] = await Promise.allSettled([
       processPurchase({
         session,
@@ -219,9 +200,6 @@ describe("payment concurrency — during processing", () => {
     if (winner.status !== "fulfilled" || duplicate.status !== "fulfilled") return;
 
     expect(winner.value.outcome).toBe("timed_out");
-    // The second card was `success`, but it must never reach the PSP for a
-    // duplicate — it must reflect the *existing* operation's outcome
-    // (timed_out), proving no second attempt/PSP call happened.
     expect(["duplicate", "timed_out"]).toContain(duplicate.value.outcome);
 
     expect(await prisma.purchase.count({ where: { userId: user.id } })).toBe(0);
@@ -241,10 +219,6 @@ describe("payment concurrency — different plans", () => {
     ]);
 
     const outcomes = countByOutcome([a, b]);
-    // Exactly one of the two plans was actually purchased — the other
-    // request joined that same operation rather than starting a parallel
-    // one for a different plan (spec.md 13 defines the operation per-user,
-    // not per-plan).
     expect(outcomes.succeeded ?? 0).toBe(1);
     expect(await prisma.purchase.count({ where: { userId: user.id } })).toBe(1);
     await assertDbInvariants(user.id);
@@ -264,8 +238,6 @@ describe("payment concurrency — refresh/retry during in-flight processing", ()
       pspOptions: { timeoutDelayMs: 150 },
     });
     await new Promise((r) => setTimeout(r, 10));
-    // Simulates the browser-refresh retry: a fresh request for the same
-    // user/plan submitted while the original's server-side work continues.
     const retry = processPurchase({ session, userId: user.id, plan, card: card(FAKE_PSP_TEST_CARDS.success) });
 
     const [originalResult, retryResult] = await Promise.all([original, retry]);
@@ -274,9 +246,6 @@ describe("payment concurrency — refresh/retry during in-flight processing", ()
     expect(retryResult.outcome === "duplicate" || retryResult.outcome === "timed_out").toBe(true);
     expect(await prisma.purchase.count({ where: { userId: user.id } })).toBe(0);
 
-    // Now retry for real, after the original attempt has terminated —
-    // this must be allowed to succeed (spec.md 13: legitimate retry after
-    // a terminal failure is a new operation).
     const finalRetry = await processPurchase({ session, userId: user.id, plan, card: card(FAKE_PSP_TEST_CARDS.success) });
     expect(finalRetry.outcome).toBe("succeeded");
     expect(await prisma.purchase.count({ where: { userId: user.id } })).toBe(1);
@@ -323,9 +292,6 @@ describe("payment concurrency — stale initiated/processing attempts", () => {
     const plan = await makeMonthlyPlan();
     const { session, user } = await identifiedVisitor();
 
-    // Simulate an attempt abandoned by a crashed/interrupted request: stuck
-    // in `initiated`, never reached `processing`, and old enough to be past
-    // any real PSP round trip.
     const stale = await prisma.paymentAttempt.create({ data: { userId: user.id, planId: plan.id } });
     await prisma.$executeRawUnsafe(
       `UPDATE "payment_attempts" SET "updated_at" = now() - interval '5 minutes' WHERE "id" = $1`,
@@ -370,8 +336,6 @@ describe("payment concurrency — analytics under duplicate/concurrent requests"
     );
 
     expect(await prisma.funnelEvent.count({ where: { eventName: "purchase_succeeded", userId: user.id } })).toBe(1);
-    // purchase_attempted is recorded once per actually-created attempt, not
-    // once per HTTP request — duplicates never create a new attempt id.
     expect(await prisma.funnelEvent.count({ where: { eventName: "purchase_attempted", userId: user.id } })).toBe(1);
   });
 });

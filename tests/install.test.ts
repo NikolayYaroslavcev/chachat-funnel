@@ -138,9 +138,6 @@ describe("getSucceededPurchase", () => {
 });
 
 describe("hasSucceededPurchaseForVisitor", () => {
-  // spec.md 7, 18: the repeat-visit → Install redirect must apply
-  // "regardless of which screen the repeat visit starts from" — this is the
-  // guard Start and every Quiz screen call, in addition to Email/Paywall.
   it("returns false when there is no visitor id at all", async () => {
     expect(await hasSucceededPurchaseForVisitor(undefined)).toBe(false);
   });

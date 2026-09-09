@@ -7,17 +7,10 @@ import { VISITOR_COOKIE_NAME } from "@/lib/cookies";
 import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 import styles from "./start.module.css";
 
-// Start screen (spec.md 4.1): explains the product, gives a reason to
-// continue, single CTA into the quiz. Copy uses only confirmed ChaChat
-// capabilities (product-research.md 1) — memory, voice, custom characters —
-// kept to a neutral, "safe for review" tone despite the product's 18+
-// romance/roleplay positioning (spec.md 2, 15).
 export default async function StartPage() {
   const cookieStore = await cookies();
   const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
 
-  // Repeat visit (spec.md 7, 18): send an already-purchased identity
-  // straight to Install even when the repeat visit starts at Start.
   if (await hasSucceededPurchaseForVisitor(visitorId)) {
     redirect("/install");
   }

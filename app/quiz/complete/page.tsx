@@ -9,18 +9,10 @@ import { TOTAL_QUIZ_STEPS } from "@/lib/quiz";
 import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 import styles from "@/components/quiz/quiz.module.css";
 
-// Quiz completion holding screen (spec.md: "finish the Quiz ready for the
-// Email stage"). Not one of the 6 canonical funnel screens, so it
-// deliberately fires no screen_view (spec.md 10 only defines that event for
-// start/quiz/email/paywall/payment/install). Guards against being reached
-// before every question is answered — redirects back into the quiz instead
-// of showing a confusing empty completion state.
 export default async function QuizCompletePage() {
   const cookieStore = await cookies();
   const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
 
-  // Repeat visit (spec.md 7, 18): send an already-purchased identity
-  // straight to Install even when the repeat visit starts here.
   if (await hasSucceededPurchaseForVisitor(visitorId)) {
     redirect("/install");
   }

@@ -4,6 +4,7 @@
   --surface: #221c16;
   --surface-hover: #2a231b;
   --border: #3a3226;
+  --border-strong: #7d694e;
   --text: #f4ede2;
   --text-muted: #a99f8d;
   --accent: #de8552;
@@ -23,7 +24,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
 
-  --max-width: 480px;
+  --max-width: clamp(480px, 23vw, 760px);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 

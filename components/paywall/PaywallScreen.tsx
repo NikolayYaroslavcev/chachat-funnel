@@ -6,17 +6,6 @@ import { formatCardNumber, formatExpiry, isValidCardNumber, isValidCvc, isValidE
 import type { PlanSummary } from "@/lib/paywall";
 import styles from "./paywall.module.css";
 
-// Stage 12 (spec.md 13): a stable id for one logical purchase action, sent
-// with every request so a repeat of the exact same submit — double-click,
-// or the same submit resuming after a refresh in this tab — is recognized
-// server-side as the same operation instead of a new one. Kept in
-// sessionStorage (not localStorage) so it's deliberately per-tab: two tabs
-// must NOT share it, since the whole point of the per-user active-attempt
-// guarantee is to cover that case without relying on a shared client value.
-// Cleared once a definitive server response arrives; left in place after a
-// network-level failure, since the server may have processed the request
-// anyway (spec.md 13's "Network failure" scenario) and the next retry needs
-// the same key to find it.
 const IDEMPOTENCY_KEY_STORAGE_KEY = "chachat:purchase-idempotency-key";
 
 function getOrCreateIdempotencyKey(): string {
@@ -27,9 +16,6 @@ function getOrCreateIdempotencyKey(): string {
     sessionStorage.setItem(IDEMPOTENCY_KEY_STORAGE_KEY, created);
     return created;
   } catch {
-    // sessionStorage unavailable (e.g. privacy mode) — fall back to a
-    // request-scoped key. Loses refresh-resume recognition, not the
-    // underlying server-side guarantee.
     return crypto.randomUUID();
   }
 }
@@ -38,15 +24,11 @@ function clearIdempotencyKey() {
   try {
     sessionStorage.removeItem(IDEMPOTENCY_KEY_STORAGE_KEY);
   } catch {
-    // Best-effort.
   }
 }
 
 type Props = { plans: PlanSummary[] };
 
-// Positioning copy per plan slug, straight from spec.md 14's plan table
-// (the "Positioning" column). Purely UI ornamentation on top of the DB's
-// name/price/period — never a second source for pricing itself.
 const PLAN_POSITIONING: Record<string, { badge?: string; tagline: string }> = {
   weekly: { tagline: "Try it out, no long-term commitment." },
   monthly: { badge: "Most popular", tagline: "The regular way most people stay connected with their companion." },
@@ -66,12 +48,6 @@ function periodLabel(days: number): string {
   return `${Math.round(days / 30)} months`;
 }
 
-// Renders the Paywall (spec.md 4.4, 14): three plans, a custom card-number/
-// expiry/CVC form, and a Purchase action wired to the real /api/purchase
-// payment flow. Success shows a clear success state (the Install screen
-// itself is a later stage); decline/timeout show a recoverable error and
-// leave the form editable for retry, per spec.md 11's decline/timeout
-// behavior.
 export function PaywallScreen({ plans }: Props) {
   const router = useRouter();
   const defaultPlan = plans.find((p) => p.slug === "monthly") ?? plans[0];
@@ -100,8 +76,6 @@ export function PaywallScreen({ plans }: Props) {
         keepalive: true,
       });
     } catch {
-      // Best-effort analytics call — plan selection UI state doesn't depend
-      // on it succeeding, matching ScreenView's fire-and-forget pattern.
     }
   }
 
@@ -145,21 +119,11 @@ export function PaywallScreen({ plans }: Props) {
       if (res.ok && data?.status === "succeeded") {
         clearIdempotencyKey();
         setStatus("success");
-        // Payment -> Install (spec.md 4.5, 11): the payment attempt just
-        // reached `succeeded`, so Install's own server-side guard
-        // (resolveInstallAccess) will now find the purchase this request
-        // created. `success` stays rendered below until the navigation
-        // actually completes, instead of a blank gap.
         router.push("/install");
         return;
       }
 
       if (data?.status === "duplicate") {
-        // Another submit of this same action is still being processed
-        // server-side (spec.md 13) — deliberately don't clear the stored
-        // key: it still identifies that same in-flight operation, so the
-        // next click (or the next mount, after a refresh) resolves to its
-        // real outcome instead of starting a second one.
         setFormError("Your payment is already being processed. Please wait a moment and try again.");
         setStatus("error");
         return;
@@ -175,9 +139,6 @@ export function PaywallScreen({ plans }: Props) {
       clearIdempotencyKey();
       setStatus("error");
     } catch {
-      // The request may still have reached the server (spec.md 13's
-      // "Network failure" scenario) — keep the key so a retry resolves to
-      // whatever actually happened instead of starting a new operation.
       setFormError("Couldn't reach the server, check your connection and try again.");
       setStatus("error");
     }

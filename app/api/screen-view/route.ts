@@ -8,12 +8,6 @@ import { getSucceededPurchase } from "@/lib/install";
 
 const VALID_SCREENS: readonly Screen[] = ["start", "quiz", "email", "paywall", "payment", "install"];
 
-// Records a `screen_view` event (spec.md 10) for the funnel screen currently
-// shown to the user. Self-sufficient like /api/identify: resolves (creating
-// if necessary) the visitor/session itself rather than assuming a prior
-// /api/session call, so a screen reached directly (e.g. a deep link) still
-// establishes identity correctly — including attribution, via the same
-// `{ landingUrl, referrer }` override /api/session accepts.
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -45,11 +39,6 @@ export async function POST(request: NextRequest) {
       : { eventName: "screen_view", screen: screen as Exclude<Screen, "quiz"> },
   );
 
-  // install_viewed (spec.md 10) carries a purchase_id, which — like every
-  // other identifier here — is never taken from the client: it's looked up
-  // fresh from this visitor's own linked user, and simply skipped if none
-  // exists (e.g. this same generic endpoint reached directly without ever
-  // having passed the Install page's own server-side guard).
   if (screen === "install" && visitor.userId) {
     const purchase = await getSucceededPurchase(visitor.userId);
     if (purchase) {

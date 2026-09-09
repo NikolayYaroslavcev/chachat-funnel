@@ -203,6 +203,3 @@ describe("POST /api/purchase (route boundary)", () => {
     expect(await prisma.paymentAttempt.count()).toBe(0);
   });
 });
-
-// The full payment lifecycle (success/decline/timeout, atomicity, analytics,
-// amount/plan integrity) is covered in tests/payment.test.ts.

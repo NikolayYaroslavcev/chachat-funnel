@@ -7,11 +7,6 @@ import { getQuestionByStep, TOTAL_QUIZ_STEPS } from "@/lib/quiz";
 import { hasSucceededPurchaseForVisitor } from "@/lib/install";
 import { QuizStepScreen } from "@/components/quiz/QuizStepScreen";
 
-// Server Component: validates the step, and — read-only, no session/visitor
-// is created or touched here (a GET render must stay side-effect-free) —
-// looks up any existing answer for this session/question so refresh/back
-// shows the prior choice (spec.md 4.2). A stale (expired) session is treated
-// as having no answers, per findActiveSession's comment.
 export default async function QuizStepPage({ params }: { params: Promise<{ step: string }> }) {
   const { step: stepParam } = await params;
   const step = Number(stepParam);
@@ -24,8 +19,6 @@ export default async function QuizStepPage({ params }: { params: Promise<{ step:
   const cookieStore = await cookies();
   const visitorId = cookieStore.get(VISITOR_COOKIE_NAME)?.value;
 
-  // Repeat visit (spec.md 7, 18): send an already-purchased identity
-  // straight to Install even when the repeat visit starts mid-quiz.
   if (await hasSucceededPurchaseForVisitor(visitorId)) {
     redirect("/install");
   }

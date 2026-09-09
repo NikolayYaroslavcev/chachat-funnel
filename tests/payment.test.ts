@@ -92,7 +92,7 @@ describe("processPurchase — success", () => {
     const attempt = await prisma.paymentAttempt.findFirstOrThrow();
     const serializedAttempt = JSON.stringify(attempt);
     expect(serializedAttempt).not.toContain(FAKE_PSP_TEST_CARDS.success);
-    expect(serializedAttempt).not.toContain("123"); // cvc
+    expect(serializedAttempt).not.toContain("123");
     expect(attempt.maskedCardNumber).toMatch(/^•+ \d{4}$/);
 
     const purchase = await prisma.purchase.findFirstOrThrow();
@@ -154,11 +154,6 @@ describe("processPurchase — timeout", () => {
 
 describe("processPurchase — plan/attempt integrity", () => {
   it("always uses the DB plan's amount/currency for the purchase, regardless of what a caller passes as the plan object's price", async () => {
-    // Simulates the server-side plan lookup already having happened — the
-    // only "client-controlled" value that could reach this function is the
-    // planId used to look the plan up, never a price. Passing the real
-    // looked-up plan (not a client-shaped object) is what makes this safe;
-    // this test pins that the persisted amount matches the plan row exactly.
     const plan = await makeMonthlyPlan();
     const { session, user } = await identifiedVisitor();
 

@@ -3,10 +3,6 @@ import { resolveVisitorSession } from "@/lib/visitor-session";
 import { identifyVisitor, InvalidEmailError } from "@/lib/identify";
 import { setVisitorCookie } from "@/lib/cookies";
 
-// Anonymous visitor -> identified user (spec.md 5-6). Resolves the current
-// visitor/session first so this endpoint is self-sufficient even without a
-// prior /api/session call, then links (or, for the documented edge case of
-// a different email on an already-linked visitor, re-anchors identity).
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {

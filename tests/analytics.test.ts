@@ -223,8 +223,6 @@ describe("email_submitted wiring in identifyVisitor", () => {
     });
     expect(events).toHaveLength(2);
     expect(await prisma.user.count()).toBe(1);
-    // First submission creates the user; the repeated submission is the
-    // idempotent no-op path, but still fires its own event.
     expect(events[0].properties).toEqual({ is_new_user: true, is_existing_user: false });
     expect(events[1].properties).toEqual({ is_new_user: false, is_existing_user: true });
   });

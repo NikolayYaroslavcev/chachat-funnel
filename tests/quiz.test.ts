@@ -65,8 +65,6 @@ describe("submitQuizAnswer", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].answerValue).toBe("romantic_companion");
 
-    // Both submissions still fire their own quiz_answer_submitted event —
-    // the event log isn't deduplicated, only the answer row is.
     const events = await prisma.funnelEvent.count({ where: { eventName: "quiz_answer_submitted" } });
     expect(events).toBe(2);
   });
@@ -100,8 +98,6 @@ describe("submitQuizAnswer", () => {
     const completedEvents = await prisma.funnelEvent.count({ where: { eventName: "quiz_completed" } });
     expect(completedEvents).toBe(1);
 
-    // Changing an already-answered question afterwards must not re-fire
-    // quiz_completed a second time.
     const first = QUIZ_QUESTIONS[0];
     const otherOption = first.options[1] ?? first.options[0];
     const again = await submitQuizAnswer(session, visitor, first.key, otherOption.value);

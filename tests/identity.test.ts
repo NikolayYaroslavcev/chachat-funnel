@@ -20,10 +20,6 @@ function makeRequest(opts: {
   });
 }
 
-// Body-carrying variant for the /api/identify route tests below — this is
-// the actual boundary the Email screen's fetch("/api/identify", ...) call
-// hits, as opposed to identifyVisitor() which the "identifyVisitor" suite
-// above exercises directly.
 function makeIdentifyRequest(opts: { visitorId?: string; rawBody: string }): NextRequest {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (opts.visitorId) headers["cookie"] = `${VISITOR_COOKIE_NAME}=${opts.visitorId}`;
@@ -34,9 +30,6 @@ function makeIdentifyRequest(opts: { visitorId?: string; rawBody: string }): Nex
   });
 }
 
-// Test isolation: every table this suite touches is truncated before each
-// test rather than relying on transactions, since the code under test opens
-// its own transactions (nested transactions aren't what we want to test).
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(
     'TRUNCATE TABLE "quiz_answers", "purchases", "payment_attempts", "plans", "sessions", "visitors", "users" RESTART IDENTITY CASCADE',
@@ -79,7 +72,6 @@ describe("resolveVisitorSession", () => {
       makeRequest({ url: "http://localhost:3000/api/session?utm_source=google" }),
     );
 
-    // Simulate 31 minutes of inactivity by backdating the session directly.
     await prisma.session.update({
       where: { id: first.session.id },
       data: { lastActivityAt: new Date(Date.now() - SESSION_INACTIVITY_MS - 60_000) },
@@ -135,8 +127,6 @@ describe("identifyVisitor", () => {
   it("links to the existing user for an existing email without creating a duplicate, preserving prior history and existing purchases", async () => {
     const existingUser = await prisma.user.create({ data: { email: "existing@example.com" } });
 
-    // Simulate the existing user's own prior anonymous history + a purchase,
-    // via a *different* visitor (as it would be in reality).
     const priorVisitor = await prisma.visitor.create({ data: { userId: existingUser.id } });
     await prisma.session.create({
       data: { visitorId: priorVisitor.id, utmSource: "old-campaign" },
@@ -164,8 +154,6 @@ describe("identifyVisitor", () => {
       },
     });
 
-    // New anonymous visitor accumulates its own history, then identifies
-    // with the same (existing) email.
     const { visitor, session } = await resolveVisitorSession(makeRequest({}));
     await prisma.quizAnswer.create({
       data: { sessionId: session.id, questionKey: "q1", answerValue: "a1" },
@@ -178,15 +166,12 @@ describe("identifyVisitor", () => {
     expect(result.user.id).toBe(existingUser.id);
     expect(await prisma.user.count()).toBe(1);
 
-    // Current visitor's quiz answer is still reachable, unmoved/uncopied.
     const answer = await prisma.quizAnswer.findFirstOrThrow({ where: { sessionId: session.id } });
     expect(answer.answerValue).toBe("a1");
 
-    // The existing user's prior purchase is untouched.
     const stillThere = await prisma.purchase.findUniqueOrThrow({ where: { id: purchase.id } });
     expect(stillThere.userId).toBe(existingUser.id);
 
-    // Both visitors (old and newly linked) now resolve to the same user.
     const linkedVisitor = await prisma.visitor.findUniqueOrThrow({ where: { id: visitor.id } });
     expect(linkedVisitor.userId).toBe(existingUser.id);
   });
@@ -214,7 +199,6 @@ describe("identifyVisitor", () => {
     expect(second.user.id).not.toBe(first.user.id);
     expect(second.visitor.id).not.toBe(visitor.id);
 
-    // The original visitor is untouched — still linked to the first user.
     const originalVisitor = await prisma.visitor.findUniqueOrThrow({ where: { id: visitor.id } });
     expect(originalVisitor.userId).toBe(first.user.id);
 
@@ -240,10 +224,6 @@ describe("identifyVisitor", () => {
   });
 });
 
-// POST /api/identify is the actual integration boundary the Email screen's
-// fetch() call hits — it owns JSON parsing, cookie setting, and the
-// error-shape the UI's error handling relies on. identifyVisitor() itself
-// is already covered above; these tests only cover the route wrapper.
 describe("POST /api/identify (route)", () => {
   it("rejects a missing email field without creating anything", async () => {
     const res = await identifyRoute(makeIdentifyRequest({ rawBody: "{}" }));

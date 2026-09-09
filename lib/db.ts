@@ -4,8 +4,6 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-// Reuse a single client across module reloads in dev so the connection pool
-// doesn't grow unbounded on every hot reload.
 export const prisma = global.__prisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") {

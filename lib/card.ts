@@ -1,9 +1,3 @@
-// Client-side "obvious errors" validation for the Paywall payment form
-// (spec.md 14). Deliberately a generic Luhn + length/shape check, not a
-// full payment-card validation engine (issuer BIN ranges, brand-specific
-// lengths) — this field is never actually charged in this stage, so it only
-// needs to catch the mistakes a real user makes (mistyped digit, wrong
-// number of digits, expired date), not classify card brands.
 const CARD_NUMBER_MIN_DIGITS = 13;
 const CARD_NUMBER_MAX_DIGITS = 19;
 
@@ -40,7 +34,6 @@ export function formatExpiry(raw: string): string {
 
 const EXPIRY_RE = /^(\d{2})\/(\d{2})$/;
 
-// `now` is injectable so tests don't depend on the actual current date.
 export function isValidExpiry(raw: string, now: Date = new Date()): boolean {
   const match = EXPIRY_RE.exec(raw.trim());
   if (!match) return false;

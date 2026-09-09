@@ -3,10 +3,6 @@ import { resolveVisitorSession } from "@/lib/visitor-session";
 import { recordPlanSelection, InvalidPlanError } from "@/lib/paywall";
 import { setVisitorCookie } from "@/lib/cookies";
 
-// Records plan_selected (spec.md 4.4, 10) when a user picks a plan on the
-// Paywall. Requires an identified visitor server-side — spec.md 4 requires
-// the server, not client navigation, to enforce Paywall's precondition, so
-// this endpoint checks it itself rather than trusting the calling page.
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {

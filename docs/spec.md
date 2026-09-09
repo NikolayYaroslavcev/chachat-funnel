@@ -543,43 +543,43 @@ Graceful redirect (не error-страница, не "403") на Paywall (или
 ## 18. Acceptance criteria
 
 ### Funnel
-- [ ] Полный happy path `Start → Quiz → Email → Paywall → Payment → Install` проходим end-to-end.
-- [ ] Недопустимые прямые переходы (раздел 4) блокируются с graceful redirect, а не ошибкой/крашем.
+- [x] Полный happy path `Start → Quiz → Email → Paywall → Payment → Install` проходим end-to-end.
+- [x] Недопустимые прямые переходы (раздел 4) блокируются с graceful redirect, а не ошибкой/крашем.
 
 ### Identity
-- [ ] Новый anonymous visitor создаётся при первом визите и накапливает историю до email.
-- [ ] Anonymous → новый email создаёт ровно одного нового user, история visitor становится его историей.
-- [ ] Anonymous → существующий email НЕ создаёт нового user, привязывает текущего visitor к найденному user, не теряет и не дублирует его текущую anonymous-историю и существующие purchases.
-- [ ] Повторная отправка того же email идемпотентна (без дублирующих связей).
-- [ ] Повторный визит уже identified пользователя с существующей successful purchase направляется сразу на Install.
+- [x] Новый anonymous visitor создаётся при первом визите и накапливает историю до email.
+- [x] Anonymous → новый email создаёт ровно одного нового user, история visitor становится его историей.
+- [x] Anonymous → существующий email НЕ создаёт нового user, привязывает текущего visitor к найденному user, не теряет и не дублирует его текущую anonymous-историю и существующие purchases.
+- [x] Повторная отправка того же email идемпотентна (без дублирующих связей).
+- [x] Повторный визит уже identified пользователя с существующей successful purchase направляется сразу на Install.
 
 ### Attribution
-- [ ] UTM/referrer/landing URL фиксируются при первом запросе новой session и не перезаписываются последующей навигацией в её рамках.
-- [ ] Canonical acquisition attribution пользователя вычислима как attribution его самой ранней session (SQL-запросом).
+- [x] UTM/referrer/landing URL фиксируются при первом запросе новой session и не перезаписываются последующей навигацией в её рамках.
+- [x] Canonical acquisition attribution пользователя вычислима как attribution его самой ранней session (SQL-запросом).
 
 ### Analytics
-- [ ] Все события из раздела 10 записываются в PostgreSQL с обязательными идентификаторами.
-- [ ] По данным БД восстановима полная история конкретного user: откуда пришёл, какие экраны видел, какие ответы дал, какой email указал, какой plan выбрал, чем закончилась оплата.
-- [ ] Funnel/drop-off/conversion считаемы SQL-запросами без дополнительной логики приложения.
+- [x] Все события из раздела 10 записываются в PostgreSQL с обязательными идентификаторами.
+- [x] По данным БД восстановима полная история конкретного user: откуда пришёл, какие экраны видел, какие ответы дал, какой email указал, какой plan выбрал, чем закончилась оплата.
+- [x] Funnel/drop-off/conversion считаемы SQL-запросами без дополнительной логики приложения.
 
 ### Payments
-- [ ] Success, decline, timeout воспроизводимы детерминированно через задокументированные тестовые карты.
-- [ ] Payment state machine (раздел 11) соблюдается: нет переходов из терминальных состояний, purchase создаётся только вместе с succeeded.
-- [ ] Retry после decline/timeout/error разрешён и создаёт новый payment_attempt.
-- [ ] Install доступен исключительно при наличии succeeded purchase.
+- [x] Success, decline, timeout воспроизводимы детерминированно через задокументированные тестовые карты.
+- [x] Payment state machine (раздел 11) соблюдается: нет переходов из терминальных состояний, purchase создаётся только вместе с succeeded.
+- [x] Retry после decline/timeout/error разрешён и создаёт новый payment_attempt.
+- [x] Install доступен исключительно при наличии succeeded purchase.
 
 ### Concurrency
-- [ ] Double-click не создаёт вторую succeeded purchase.
-- [ ] Две вкладки, инициирующие оплату одновременно, не создают вторую succeeded purchase.
-- [ ] Refresh во время обработки не создаёт новый attempt/purchase, отражает фактическое состояние.
-- [ ] Повторная отправка того же запроса (в т.ч. эмулирующая network failure) не создаёт вторую succeeded purchase.
-- [ ] Ни при каком из вышеперечисленных сценариев не появляется более одной succeeded purchase на одну логическую операцию.
+- [x] Double-click не создаёт вторую succeeded purchase.
+- [x] Две вкладки, инициирующие оплату одновременно, не создают вторую succeeded purchase.
+- [x] Refresh во время обработки не создаёт новый attempt/purchase, отражает фактическое состояние.
+- [x] Повторная отправка того же запроса (в т.ч. эмулирующая network failure) не создаёт вторую succeeded purchase.
+- [x] Ни при каком из вышеперечисленных сценариев не появляется более одной succeeded purchase на одну логическую операцию.
 
 ### Docker
-- [ ] После clean checkout `docker compose up` поднимает приложение и PostgreSQL, миграции применяются автоматически, без ручной установки зависимостей вне контейнеров.
+- [x] После clean checkout `docker compose up` поднимает приложение и PostgreSQL, миграции применяются автоматически, без ручной установки зависимостей вне контейнеров.
 
 ### Documentation
-- [ ] В репозитории присутствуют: `docs/spec.md`, agent instructions (AGENTS.md), README (с SQL-примерами и test card rules), prompts/skills/commands (если использовались).
+- [x] В репозитории присутствуют: `docs/spec.md`, agent instructions (AGENTS.md), README (с SQL-примерами и test card rules), prompts/skills/commands (если использовались).
 
 ---
 

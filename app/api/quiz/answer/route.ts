@@ -3,9 +3,6 @@ import { resolveVisitorSession } from "@/lib/visitor-session";
 import { setVisitorCookie } from "@/lib/cookies";
 import { submitQuizAnswer, InvalidQuizAnswerError } from "@/lib/quiz";
 
-// Persists one quiz answer (spec.md 4.2, 9, 15). Self-sufficient like
-// /api/identify and /api/screen-view: resolves the visitor/session itself,
-// so a quiz step reached directly still works.
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
