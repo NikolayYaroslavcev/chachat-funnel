@@ -1,56 +1,48 @@
 # ChaChat Funnel
 
-A full-stack test assignment: a small acquisition funnel for ChaChat, an AI
-companion/roleplay chat app. The focus is correctness of the user scenario,
-identity handling, attribution, analytics, and payment logic (including
-concurrent and repeated requests), not visual polish.
+**Русский** · [English](README.en.md)
+
+Полноценное fullstack-тестовое задание: небольшая воронка привлечения для ChaChat, чата с ИИ-компаньонами и ролевыми персонажами. Упор сделан на корректность пользовательского сценария, работу с идентификацией, атрибуцию, аналитику и платёжную логику (включая параллельные и повторные запросы), а не на визуальную отделку.
 
 ```
 Start → Quiz → Email → Paywall → Payment → Install
 ```
 
-Payment isn't a separate route. It's the processing state of the Paywall's
-purchase request, handled by a deterministic fake payment processor.
+Оплата не вынесена в отдельный маршрут. Это состояние обработки запроса на покупку на Paywall, которое выполняет детерминированный фейковый платёжный процессор.
 
-## Tech stack
+![ChaChat Funnel](docs/screenshot.png)
 
-- Next.js 16 (App Router) + React 19, UI and API routes in one app
-- TypeScript throughout
-- PostgreSQL 16, the single source of truth for identity, funnel events, quiz
-  answers, plans, payment attempts, and purchases
-- Prisma 6 for schema, migrations, and the DB client
-- Docker Compose (`postgres:16-alpine` plus the app, built from the repo
-  [Dockerfile](Dockerfile))
-- Vitest, run against a real Postgres instance, no DB mocking
+## Технологический стек
 
-If a library isn't in [package.json](package.json), it isn't part of this
-project.
+- Next.js 16 (App Router) + React 19, UI и API-маршруты в одном приложении
+- TypeScript везде
+- PostgreSQL 16, единственный источник истины для идентификации, событий воронки, ответов квиза, тарифов, попыток оплаты и покупок
+- Prisma 6 для схемы, миграций и клиента БД
+- Docker Compose (`postgres:16-alpine` и приложение, собранное из
+  [Dockerfile](Dockerfile) в репозитории)
+- Vitest, запускается на настоящем Postgres, без моков БД
 
-## Quick start
+Если библиотеки нет в [package.json](package.json), она не входит в этот проект.
+
+## Быстрый старт
 
 ```bash
 cp .env.example .env
 docker compose up
 ```
 
-This starts two services: `db` (Postgres, with a healthcheck gating the
-app's startup) and `app` (the Next.js app). On every container start, the
-entrypoint runs `prisma migrate deploy`, then `node prisma/seed.mjs`, then
-`npm run start`. Migrations apply automatically and the three-plan catalog
-(weekly / monthly / 3-months) is seeded automatically, so no manual database
-setup is needed. The seed script upserts by plan slug, so it's also a
-no-op on later restarts.
+Запускаются два сервиса: `db` (Postgres, healthcheck не даёт приложению стартовать раньше времени) и `app` (приложение на Next.js). При каждом старте контейнера entrypoint выполняет `prisma migrate deploy`, затем `node prisma/seed.mjs`, затем `npm run start`. Миграции применяются автоматически, а каталог из трёх тарифов (weekly / monthly / 3-months) заполняется автоматически, так что ручная настройка базы не нужна. Сид-скрипт делает upsert по slug тарифа, поэтому при последующих перезапусках он ничего не меняет.
 
-The app runs at **http://localhost:3000**.
+Приложение доступно по адресу **http://localhost:3000**.
 
-To check the app can reach the database:
+Проверить, что приложение достучалось до базы:
 
 ```bash
 curl http://localhost:3000/api/health
 # {"status":"ok","database":"connected"}
 ```
 
-## Tests
+## Тесты
 
 ```bash
 docker compose up -d db   # tests run against a real Postgres, not a mock
@@ -58,14 +50,9 @@ npm install
 npm test                  # vitest run
 ```
 
-[tests/](tests/) covers identity/session resolution and attribution, the
-quiz, the fake PSP, the Paywall, and, most heavily, the payment state
-machine, retries, and concurrency (double-click, two tabs, repeated
-request). Testing effort was concentrated on payment logic and the
-invariants behind it; most UI components and simpler API routes aren't
-unit-tested directly.
+[tests/](tests/) покрывает определение идентификации и сессии, атрибуцию, квиз, фейковый PSP, Paywall и, больше всего, конечный автомат платежей, повторные попытки и конкурентность (двойной клик, две вкладки, повторный запрос). Основные усилия по тестированию направлены на платёжную логику и инварианты, которые за ней стоят. Большинство UI-компонентов и простых API-маршрутов напрямую юнит-тестами не покрыто.
 
-Other checks:
+Остальные проверки:
 
 ```bash
 npm run typecheck
@@ -73,84 +60,49 @@ npm run lint
 npm run build
 ```
 
-## Test payment cards
+## Тестовые карты
 
-The payment processor is a deterministic fake PSP
-([lib/fake-psp.ts](lib/fake-psp.ts)). No network call is ever made, and the
-outcome depends only on the card number entered in the Paywall's payment
-form. These aren't real payment credentials; they only work against this
-project's fake processor.
+Платёжный процессор это детерминированный фейковый PSP ([lib/fake-psp.ts](lib/fake-psp.ts)). Сетевых вызовов он не делает, а результат зависит только от номера карты, введённого в платёжной форме Paywall. Это не настоящие платёжные данные, они работают только с фейковым процессором этого проекта.
 
-| Card number            | Outcome | Notes                                                       |
-| ----------------------- | ------- | ------------------------------------------------------------ |
-| `4242 4242 4242 4242`   | Success | Resolves immediately.                                        |
-| `4000 0000 0000 0002`   | Decline | Resolves immediately, reason `card_declined`.                 |
-| `4000 0000 0000 0044`   | Timeout | Resolves as `timed_out` after a bounded ~3s simulated delay. |
+| Номер карты             | Результат | Примечания                                                         |
+| ----------------------- | --------- | ------------------------------------------------------------------ |
+| `4242 4242 4242 4242`   | Успех     | Обрабатывается сразу.                                              |
+| `4000 0000 0000 0002`   | Отказ     | Обрабатывается сразу, причина `card_declined`.                     |
+| `4000 0000 0000 0044`   | Таймаут   | Завершается как `timed_out` после ограниченной задержки около 3 с. |
 
-Any other card number, including malformed input, is declined with reason
-`unsupported_test_card`. Expiry/CVC are accepted but never affect the
-outcome, only the client-side format check in [lib/card.ts](lib/card.ts)
-has to pass: any not-yet-expired `MM/YY` (e.g. `12/30`), and any 3-4 digit
-CVC (e.g. `123`). Full details: [docs/fake-psp.md](docs/fake-psp.md).
+Любой другой номер карты, включая некорректный ввод, отклоняется с причиной `unsupported_test_card`. Срок действия и CVC принимаются, но на результат не влияют. Нужно лишь пройти клиентскую проверку формата из [lib/card.ts](lib/card.ts): любой ещё не истёкший срок в формате `MM/YY` (например, `12/30`) и любой CVC из 3-4 цифр (например, `123`). Подробности: [docs/fake-psp.md](docs/fake-psp.md).
 
-## Funnel behavior
+## Поведение воронки
 
-- **Start**: value proposition, single CTA into the quiz. An anonymous
-  visitor and session are established here (or on first request) and
-  persist across the funnel, before any identity is known.
-- **Quiz**: five questions, one answer saved per step. Re-answering a step
-  updates the existing answer instead of duplicating it.
-- **Email**: identifies the visitor as a user. A new email creates a user;
-  an existing email links the current visitor to that user without losing
-  quiz/attribution history and without creating a duplicate user.
-- **Paywall**: three DB-backed subscription plans plus a custom payment
-  form, no external redirect.
-- **Payment**: the Paywall form's purchase request goes through the fake
-  PSP. The UI reflects success, decline, or timeout, and offers retry on
-  failure.
-- **Install**: shown only once the identity has a succeeded purchase,
-  checked server-side on every visit. Links to real public ChaChat entry
-  points.
-- **Repeat visit**: a returning visitor whose identity already has a
-  succeeded purchase is redirected straight to Install regardless of which
-  funnel screen they land on (Start, any Quiz step, Email, or Paywall), and
-  Install re-checks access on every load.
+- **Start**: ценностное предложение и одна кнопка, ведущая в квиз. Анонимный посетитель и сессия создаются здесь (или при первом запросе) и сохраняются на протяжении всей воронки, ещё до того как стала известна личность.
+- **Quiz**: пять вопросов, на каждом шаге сохраняется один ответ. Повторный ответ на шаг обновляет существующий ответ, а не дублирует его.
+- **Email**: идентифицирует посетителя как пользователя. Новый email создаёт пользователя, существующий привязывает текущего посетителя к этому пользователю без потери истории квиза и атрибуции и без создания дубликата.
+- **Paywall**: три тарифа подписки из БД и собственная платёжная форма, без внешнего редиректа.
+- **Payment**: запрос на покупку из формы Paywall проходит через фейковый PSP. UI показывает успех, отказ или таймаут и предлагает повторить попытку при неудаче.
+- **Install**: показывается только когда у идентичности есть успешная покупка, что проверяется на сервере при каждом заходе. Содержит ссылки на настоящие публичные точки входа ChaChat.
+- **Повторный визит**: вернувшийся посетитель, у идентичности которого уже есть успешная покупка, перенаправляется сразу на Install, независимо от того, на какой экран воронки он попал (Start, любой шаг Quiz, Email или Paywall), а Install заново проверяет доступ при каждой загрузке.
 
-Full rationale for these decisions, including the identity model,
-attribution, the payment state machine, and concurrency handling, is in
-[docs/spec.md](docs/spec.md).
+Полное обоснование этих решений, включая модель идентификации, атрибуцию, конечный автомат платежей и обработку конкурентности, находится в [docs/spec.md](docs/spec.md).
 
-## Analytics
+## Аналитика
 
-Funnel events are written to the `funnel_events` table as they happen, not
-just logged client-side. Every event carries `session_id`, a nullable
-`user_id` (set once the visitor is identified), `event_name`,
-`occurred_at`, and an event-specific `properties` payload.
+События воронки записываются в таблицу `funnel_events` по мере их возникновения, а не просто логируются на клиенте. Каждое событие содержит `session_id`, необязательный `user_id` (заполняется, когда посетитель идентифицирован), `event_name`, `occurred_at` и `properties` со специфичными для события данными.
 
-Events implemented: `screen_view` (per screen, quiz views also carry the
-step), `quiz_answer_submitted`, `quiz_completed`, `email_submitted` (new vs.
-existing user), `plan_selected`, `purchase_attempted`,
-`purchase_succeeded`, `purchase_failed` (with reason), `install_viewed`.
+Реализованные события: `screen_view` (на каждый экран, просмотры квиза также содержат шаг), `quiz_answer_submitted`, `quiz_completed`, `email_submitted` (новый или существующий пользователь), `plan_selected`, `purchase_attempted`, `purchase_succeeded`, `purchase_failed` (с причиной), `install_viewed`.
 
-Six example queries live in
-[docs/analytics-queries.sql](docs/analytics-queries.sql): Paywall
-conversion, quiz drop-off, full funnel progression, plan popularity and
-revenue, payment outcome distribution, and acquisition performance by UTM
-source. All six were run against this schema and verified to return valid
-results. Run the whole file against the running Postgres container:
+Шесть примеров запросов лежат в [docs/analytics-queries.sql](docs/analytics-queries.sql): конверсия Paywall, отвалы в квизе, прохождение всей воронки, популярность тарифов и выручка, распределение результатов оплаты, эффективность привлечения по UTM-источникам. Все шесть были выполнены на этой схеме, и каждый вернул корректный результат. Весь файл можно выполнить в запущенном контейнере Postgres:
 
 ```bash
 docker compose exec -T db psql -U chachat -d chachat_funnel < docs/analytics-queries.sql
 ```
 
-(The `db` container only sees its own filesystem, so the file has to be
-piped in over stdin rather than referenced with `-f`.)
+(Контейнер `db` видит только собственную файловую систему, поэтому файл нужно передавать через stdin, а не указывать через `-f`.)
 
-## Project structure
+## Структура проекта
 
 ```
 app/            Next.js App Router: pages (start/quiz/email/paywall/install)
-                and API routes (app/api/*) — session, identify, quiz answers,
+                and API routes (app/api/*): session, identify, quiz answers,
                 plan selection, purchase, health check
 components/     Screen-level React components (one subfolder per screen) and
                 shared client-side helpers (session bootstrap, screen-view firing)
@@ -164,29 +116,19 @@ prisma/         schema.prisma, migrations/ (including raw-SQL invariants:
 tests/          Vitest suites, run against a real Postgres (see "Tests")
 docs/           spec.md (source of truth for behavior), product-research.md,
                 fake-psp.md, analytics-queries.sql
-AGENTS.md       Instructions for any AI agent working in this repository —
+AGENTS.md       Instructions for any AI agent working in this repository:
                 scope, invariants, and verification expectations
 ```
 
-## Known limitations
+## Известные ограничения
 
-Out of scope per [docs/spec.md](docs/spec.md):
+Вне рамок проекта согласно [docs/spec.md](docs/spec.md):
 
-- Fake payments, not a real PSP: no real card network, no PCI/billing
-  integration.
-- No real email sending: email identification doesn't send any actual
-  email.
-- No real app distribution: Install links to real public ChaChat entry
-  points, but nothing is installed or downloaded by this project.
-- No authentication/password system: identity is a client-side visitor
-  token within the funnel, not accounts/login.
-- No subscription management: no upgrade/downgrade/cancel/refund flow, no
-  promo codes, no multi-currency.
-- No general funnel resumption on repeat visit beyond the one fixed case
-  (redirect to Install if the identity already has a succeeded purchase).
-  An identified-but-unpurchased visitor who lands on Start, for example, is
-  not auto-forwarded to Paywall.
-- Not full test coverage: effort is concentrated on the payment state
-  machine, concurrency, and identity/session logic; most UI components and
-  simpler API routes are exercised manually rather than unit-tested.
-- No visual polish/animations/A-B testing/feature flags.
+- Фейковые платежи, а не настоящий PSP: нет реальной карточной сети, нет интеграции с PCI и биллингом.
+- Нет реальной отправки email: идентификация по email не отправляет никаких писем.
+- Нет реального распространения приложения: Install ведёт на настоящие публичные точки входа ChaChat, но этот проект ничего не устанавливает и не скачивает.
+- Нет системы аутентификации и паролей: идентичность это клиентский токен посетителя внутри воронки, а не аккаунты и логин.
+- Нет управления подписками: нет апгрейда, даунгрейда, отмены и возвратов, нет промокодов и мультивалютности.
+- Нет общего возобновления воронки при повторном визите, кроме одного фиксированного случая (редирект на Install, если у идентичности уже есть успешная покупка). Например, идентифицированный, но не купивший посетитель, попавший на Start, автоматически на Paywall не переправляется.
+- Покрытие тестами неполное: усилия сосредоточены на конечном автомате платежей, конкурентности и логике идентификации и сессий, а большинство UI-компонентов и простых API-маршрутов проверяются вручную, а не юнит-тестами.
+- Нет визуальной отделки, анимаций, A/B-тестирования и feature flags.
