@@ -170,29 +170,4 @@ prisma/         schema.prisma, migrations/ (including raw-SQL invariants:
 tests/          Vitest suites, run against a real Postgres (see "Tests")
 docs/           spec.md (source of truth for behavior), product-research.md,
                 fake-psp.md, analytics-queries.sql
-AGENTS.md       Instructions for any AI agent working in this repository:
-                scope, invariants, and verification expectations
 ```
-
-## Known limitations
-
-Out of scope per [docs/spec.md](docs/spec.md):
-
-- Fake payments, not a real PSP: no real card network, no PCI/billing
-  integration.
-- No real email sending: email identification doesn't send any actual
-  email.
-- No real app distribution: Install links to real public ChaChat entry
-  points, but nothing is installed or downloaded by this project.
-- No authentication/password system: identity is a client-side visitor
-  token within the funnel, not accounts/login.
-- No subscription management: no upgrade/downgrade/cancel/refund flow, no
-  promo codes, no multi-currency.
-- No general funnel resumption on repeat visit beyond the one fixed case
-  (redirect to Install if the identity already has a succeeded purchase).
-  An identified-but-unpurchased visitor who lands on Start, for example, is
-  not auto-forwarded to Paywall.
-- Not full test coverage: effort is concentrated on the payment state
-  machine, concurrency, and identity/session logic; most UI components and
-  simpler API routes are exercised manually rather than unit-tested.
-- No visual polish/animations/A-B testing/feature flags.
